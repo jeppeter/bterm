@@ -38,6 +38,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "bogl-debug.h"
 #include "bogl.h"
 #include "bogl-bgf.h"
 #include "bogl-term.h"

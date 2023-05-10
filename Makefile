@@ -21,7 +21,7 @@ LIBRSRCOBJECTS = helvB10.o helvB12.o helvR10.o timBI18.o tux75.o
 SOURCES_DEP = arrow.c bdftobogl.c bogl-cfb.c bogl-cfb.h bogl-cfb8.c	\
 bogl-cfb8.h bogl-font.c bogl-font.h \
 bogl-test.c bogl.h boglP.h boml.c	\
-boml.h bowl.c bowl.h pngtobogl.c
+boml.h bowl.c bowl.h pngtobogl.c bogl-debug.c
 
 ifeq ($(os),Linux)
 	SOURCES_DEP += bogl-pcfb.c bogl-pcfb.h bogl-tcfb.c bogl-tcfb.h bowl-boxes.c bogl.c
