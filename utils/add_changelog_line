@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]; then
+  set -- "`pwd`"
+fi
+
+( echo -n "`date`  ";
+  getent passwd $USER | awk -F: '{print $5}' | sed 's/,.*//' | \
+	  sed "s/\$/  ($EMAIL)/"
+  echo
+) > $1/.ChangeLog.$$
+
+cat $1/ChangeLog >> $1/.ChangeLog.$$
+mv -f $1/.ChangeLog.$$ $1/ChangeLog
