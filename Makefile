@@ -14,7 +14,7 @@ os := $(shell uname)
 LIBOBJECTS = $(LIBBOGLOBJECTS) $(LIBBOMLOBJECTS) $(LIBBOWLOBJECTS)	\
 	$(LIBRSRCOBJECTS)
 LIBBOGLOBJECTS = bogl.o bogl-font.o
-LIBBOMLOBJECTS = arrow.o boml.o
+LIBBOMLOBJECTS = arrow.o boml.o bogl-debug.o
 LIBBOWLOBJECTS = bowl.o symbol.o
 LIBRSRCOBJECTS = helvB10.o helvB12.o helvR10.o timBI18.o tux75.o
 
