@@ -378,6 +378,7 @@ int main(int argc, char *argv[])
     if (ptyfd > max)
       max = ptyfd;
     ret = select(max+1, &fds, NULL, NULL, &tv);
+    BOGL_DEBUG("ret [%d]", ret);
 
     if (quit)
 	    break;
