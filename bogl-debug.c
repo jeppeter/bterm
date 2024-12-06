@@ -176,7 +176,7 @@ int bogl_format_str(char** ppstr, int *psize,int level, char* file,int lineno,co
 		goto fail;
 	}
 
-	ret= asprintf(&curstr,"<%s>[%s]:",bogl_format_level(level),tmstr);
+	ret= asprintf(&curstr,"<%s>[%s:%d][%s]:",bogl_format_level(level),file,lineno,tmstr);
 	if (ret < 0) {
 		BOGL_GETERRNO(ret);
 		goto fail;
@@ -228,7 +228,7 @@ try_format_again:
 	}
 
 	va_copy(ap, oldap);
-	ret = snprintf(ptr,leftlen-1,fmt,ap);
+	ret = vsnprintf(ptr,leftlen-1,fmt,ap);
 	if (ret >= (leftlen - 1)) {
 		retsize <<= 1;
 		if (pretstr && pretstr != *ppstr) {

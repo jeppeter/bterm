@@ -15,6 +15,7 @@ extern "C" {
 
 void bogl_output_buffer_debug(int level,char* file, int lineno,void* pbuf, int buflen,char* fmt, ...);
 void bogl_output_debug(int level,char* file, int lineno,char* fmt, ...);
+int bolg_output_init(void);
 
 #ifdef __cplusplus
 };

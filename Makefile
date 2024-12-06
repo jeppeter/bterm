@@ -12,9 +12,9 @@ architecture := $(shell dpkg-architecture -qDEB_BUILD_ARCH_CPU)
 os := $(shell uname)
 
 LIBOBJECTS = $(LIBBOGLOBJECTS) $(LIBBOMLOBJECTS) $(LIBBOWLOBJECTS)	\
-	$(LIBRSRCOBJECTS)
+	$(LIBRSRCOBJECTS) bogl-debug.o
 LIBBOGLOBJECTS = bogl.o bogl-font.o
-LIBBOMLOBJECTS = arrow.o boml.o bogl-debug.o
+LIBBOMLOBJECTS = arrow.o boml.o 
 LIBBOWLOBJECTS = bowl.o symbol.o
 LIBRSRCOBJECTS = helvB10.o helvB12.o helvR10.o timBI18.o tux75.o
 
@@ -90,7 +90,7 @@ bowl-boxes: $(LIB)
 bterm: $(LIB) bterm.o bogl-term.o bogl-bgf.o
 	$(CC) $+ $(LIB) -o bterm
 
-bdftobogl: $(LIBBOGLOBJECTS)
+bdftobogl: $(LIBBOGLOBJECTS) bogl-debug.o
 %.c: %.bdf bdftobogl
 	./bdftobogl $< > $@
 

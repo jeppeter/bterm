@@ -93,16 +93,19 @@ static void *xmalloc (size_t size)
 int get_ptytty(int *xptyfd, int *xttyfd)
 {
   char buf[16];
-  int i, ptyfd, ttyfd;
+  int i, ptyfd=-1, ttyfd=-1;
 
   ptyfd = open("/dev/ptmx", O_RDWR);
   if (ptyfd >= 0) {
+    BOGL_DEBUG("ptyfd [%d]", ptyfd);
     const char *slave = ptsname(ptyfd);
     if (slave) {
+      BOGL_DEBUG("slave [%s]", slave);
       if (grantpt(ptyfd) >= 0) {
         if (unlockpt(ptyfd) >= 0) {
           ttyfd = open(slave, O_RDWR);
           if (ttyfd >= 0) {
+            BOGL_DEBUG("pytfd [%d] ttyfd [%d]",ptyfd,ttyfd);
             *xptyfd = ptyfd, *xttyfd = ttyfd;
             return 0;
           }
@@ -127,13 +130,16 @@ int get_ptytty(int *xptyfd, int *xttyfd)
         ttyfd = open(buf, O_RDWR);
       }
       if (ttyfd >= 0) {
-	*xptyfd = ptyfd, *xttyfd = ttyfd;
-	return 0;
+        BOGL_DEBUG("ptyfd [%d] ttyfd [%d]",ptyfd, ttyfd);
+      	*xptyfd = ptyfd, *xttyfd = ttyfd;
+      	return 0;
       }
       close(ptyfd);
+      BOGL_DEBUG("error get_ptytty");
       return 1;
     }
   }
+  BOGL_DEBUG("error get_ptytty");
   return 1;
 }
 
@@ -169,6 +175,7 @@ void sigterm(int sig)
 
 void spawn_shell(int ptyfd, int ttyfd, char * const *command_args)
 {
+  int ret;
   fflush(stdout);
   child_pid = fork();
   if (child_pid) {
@@ -189,8 +196,11 @@ void spawn_shell(int ptyfd, int ttyfd, char * const *command_args)
   if (ttyfd > 2)
     close(ttyfd);
   tcsetattr(0, TCSANOW, &ttysave);
-  setgid(getgid());
-  setuid(getuid());
+  ret = setgid(getgid());
+  if (ret < 0) {
+    BOGL_DEBUG("setgid error %d", ret);
+  }
+  ret = setuid(getuid());
 
   execvp(command_args[0], command_args);
   exit(127);
@@ -243,13 +253,15 @@ int main(int argc, char *argv[])
   int ret;
   char buf[8192];
   struct timeval tv;
-  int ptyfd, ttyfd;
+  int ptyfd=-1, ttyfd;
   struct bogl_font *font;
   char *locale = "", *command = NULL;
   char **command_args;
   int i;
   char o = ' ';
   int pending = 0;
+
+  bolg_output_init();
 
   for (i = 1 ; i < argc ; ++i) {
       int done = 0;
@@ -266,7 +278,7 @@ int main(int argc, char *argv[])
                   break;
 
               default:
-                  printf ("unknown option: %c\n", argv[i][1]);
+                  printf ("unknown option: [%d][%c]\n",i, argv[i][1]);
           }
         else
             switch (o)
@@ -317,12 +329,14 @@ int main(int argc, char *argv[])
   bogl_set_palette(0, 16, palette);
 
   bogl_term_redraw(term);
+  BOGL_DEBUG(" ");
 
   if (get_ptytty(&ptyfd, &ttyfd)) {
+    BOGL_DEBUG("can't get a pty");
     perror("can't get a pty");
     exit(1);
   }
-
+  BOGL_DEBUG("ptyfd [%d] ttyfd [%d]", ptyfd,ttyfd);
   if (command) {
     command_args = xmalloc(2 * sizeof *command_args);
     command_args[0] = command;
@@ -338,8 +352,10 @@ int main(int argc, char *argv[])
     command_args[0] = "/bin/sh";
     command_args[1] = NULL;
   }
+  BOGL_DEBUG(" ");
   spawn_shell(ptyfd, ttyfd, command_args);
 
+  BOGL_DEBUG(" ");
   signal(SIGHUP, reload_font);
   signal(SIGTERM, sigterm);
 
@@ -352,8 +368,10 @@ int main(int argc, char *argv[])
   ntio.c_cflag |= CS8;
   ntio.c_line = 0;
   tcsetattr(0, TCSAFLUSH, &ntio);
+  BOGL_DEBUG(" ");
 
   set_window_size(ttyfd, term->xsize, term->ysize);
+  BOGL_DEBUG(" ");
 
   for (;;) {
     fd_set fds;
@@ -375,13 +393,16 @@ int main(int argc, char *argv[])
     FD_ZERO(&fds);
     FD_SET(0, &fds);
     FD_SET(ptyfd, &fds);
-    if (ptyfd > max)
+    if (ptyfd > max) {
       max = ptyfd;
+    }
+    BOGL_DEBUG("select [%d]", max+1);
     ret = select(max+1, &fds, NULL, NULL, &tv);
     BOGL_DEBUG("ret [%d]", ret);
 
-    if (quit)
+    if (quit) {      
 	    break;
+    }
 
     if (bogl_refresh) {
       /* Handle VT switching.  */
@@ -410,8 +431,12 @@ int main(int argc, char *argv[])
       perror("select");
     if (FD_ISSET(0, &fds)) {
       ret = read(0, buf, sizeof(buf));
-      if (ret > 0)
-	write(ptyfd, buf, ret);
+      if (ret > 0) {
+	      ret = write(ptyfd, buf, ret);
+        if (ret < 0) {
+          BOGL_DEBUG("write error [%d]", ret);
+        }
+      }
     }
     else if (FD_ISSET(ptyfd,&fds)) {
       ret = read(ptyfd, buf, sizeof(buf));

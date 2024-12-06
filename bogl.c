@@ -55,6 +55,7 @@
 #include "bogl-pcfb.h"
 #include "bogl-tcfb.h"
 #endif
+#include "bogl-debug.h"
 
 /* BOGL main code. */
 
@@ -122,26 +123,38 @@ bogl_init (void)
   fb = open ("/dev/fb0", O_RDWR);
   if (fb < 0)
     fb = open ("/dev/fb/0", O_RDWR);
-  if (fb < 0)
+  if (fb < 0){
+    BOGL_DEBUG("opening /dev/fb0: %s", strerror (errno));
     return bogl_fail ("opening /dev/fb0: %s", strerror (errno));
-  if (bogl_cloexec (fb) < 0)
+  }
+  if (bogl_cloexec (fb) < 0){
+    BOGL_DEBUG("setting /dev/fb0 close-on-exec: %s", strerror (errno));
     return bogl_fail ("setting /dev/fb0 close-on-exec: %s", strerror (errno));
+  }
 
   tty = open ("/dev/tty0", O_RDWR);
   if (tty < 0)
     tty = open ("/dev/vc/0", O_RDWR);
-  if (tty < 0)
+  if (tty < 0){
+    BOGL_DEBUG("opening /dev/tty0: %s", strerror (errno));
     return bogl_fail ("opening /dev/tty0: %s", strerror (errno));
-  if (bogl_cloexec (tty) < 0)
+  }
+  if (bogl_cloexec (tty) < 0){
+    BOGL_DEBUG("setting /dev/tty0 close-on-exec: %s", strerror (errno));
     return bogl_fail ("setting /dev/tty0 close-on-exec: %s", strerror (errno));
+  }
 
-  if (-1 == ioctl (tty, VT_GETSTATE, &vts))
+  if (-1 == ioctl (tty, VT_GETSTATE, &vts)){
+    BOGL_DEBUG("can't get VT state: %s", strerror (errno));
     return bogl_fail ("can't get VT state: %s", strerror (errno));
+  }
   tty_no = vts.v_active;
 
   if (-1 == ioctl (fb, FBIOGET_FSCREENINFO, &fb_fix)
-      || -1 == ioctl (fb, FBIOGET_VSCREENINFO, &fb_var))
+      || -1 == ioctl (fb, FBIOGET_VSCREENINFO, &fb_var)){
+    BOGL_DEBUG("reading screen info: %s", strerror (errno));
     return bogl_fail ("reading screen info: %s", strerror (errno));
+  }
   
   bogl_xres = fb_var.xres;
   bogl_yres = fb_var.yres;
@@ -624,12 +637,19 @@ int
 bogl_fail (const char *format, ...)
 {
   va_list args;
+  int ret;
 
   if (error)
     return 0;
 
   va_start (args, format);
-  vasprintf (&error, format, args);
+  ret = vasprintf (&error, format, args);
+  if (ret >= 0) {
+    BOGL_DEBUG("error set [%s]",error);
+    if (format != NULL) {
+      BOGL_DEBUG("set format [%s]", format);
+    }
+  }
   va_end (args);
 
   return 0;
